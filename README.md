@@ -1,6 +1,6 @@
 # vite8-vue-hmr-repro
 
-Minimal reproduction: in **Vite 8.3.0 + Vue 3.5.24 + `@vitejs/plugin-vue` 6.0.9**, saving the same **large SFC** (a template with a big static block) over and over makes some of the HMR updates get **silently swallowed**:
+Minimal reproduction: in **Vite 8.3.1 + Vue 3.5.24 + `@vitejs/plugin-vue` 6.0.9**, saving the same **large SFC** (a template with a big static block) over and over makes some of the HMR updates get **silently swallowed**:
 
 ```text
 [DEBUG HMR before-vue] modules: [ main module, ?vue&type=style... ]   <- change was detected
@@ -14,7 +14,7 @@ Minimal reproduction: in **Vite 8.3.0 + Vue 3.5.24 + `@vitejs/plugin-vue` 6.0.9*
 | --- | --- |
 | OS / package manager | Windows + npm (no pnpm) |
 | Node.js | `^20.19.0 \|\| >=22.12.0` (measured on v26.5.1) |
-| `vite` | `8.3.0` (pinned) |
+| `vite` | `8.3.1` (pinned; the HMR code paths involved are identical to 8.3.0 — verified by diffing the shipped dist) |
 | `vue` | `3.5.24` (pinned) |
 | `@vitejs/plugin-vue` | `6.0.9` (pinned, not upgraded) |
 | anything else | none — no DevTools / Vitest / ESLint / Prettier / Pinia / Router |
@@ -106,7 +106,7 @@ Measured: the same scenario goes from **7–15 of 15 saves swallowed** (varies p
 | 项 | 值 |
 | --- | --- |
 | Windows + npm（不用 pnpm） | Node `^20.19.0 \|\| >=22.12.0`（实测 v26.5.1） |
-| `vite` / `vue` / `@vitejs/plugin-vue` | `8.3.0` / `3.5.24` / `6.0.9`（全部锁定） |
+| `vite` / `vue` / `@vitejs/plugin-vue` | `8.3.1` / `3.5.24` / `6.0.9`（全部锁定；涉及的 HMR 代码路径与 8.3.0 相同，已 diff dist 确认） |
 | 其他依赖 | 无（没有 DevTools / Vitest / ESLint / Prettier / Pinia / Router） |
 
 ### 快速开始

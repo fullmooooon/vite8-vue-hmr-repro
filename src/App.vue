@@ -1,6 +1,6 @@
 <template>
   <main class="app">
-    <h1>Vite 8.3.0 + Vue 3.5.24 + @vitejs/plugin-vue 6.0.9 — HMR repro</h1>
+    <h1>Vite 8.3.1 + Vue 3.5.24 + @vitejs/plugin-vue 6.0.9 — HMR repro</h1>
     <p class="hint">
       Save <code>src/components/HeavyPanel.vue</code> (a ~484 KB generated template) over and over and watch
       the terminal <code>[DEBUG HMR before-vue]</code> / <code>[DEBUG HMR after-vue]</code> lines and the

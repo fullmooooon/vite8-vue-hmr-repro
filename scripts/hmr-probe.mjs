@@ -372,7 +372,7 @@ async function main() {
       {
         when: new Date().toISOString(),
         node: process.version,
-        pinned: { vite: '8.3.0', vue: '3.5.24', '@vitejs/plugin-vue': '6.0.9' },
+        pinned: { vite: '8.3.1', vue: '3.5.24', '@vitejs/plugin-vue': '6.0.9' },
         options: opts,
         devServer: baseUrl,
         websocket: Boolean(socket),
