@@ -2,9 +2,12 @@
   <main class="app">
     <h1>Vite 8.3.0 + Vue 3.5.24 + @vitejs/plugin-vue 6.0.9 — HMR repro</h1>
     <p class="hint">
-      反复保存 <code>src/components/HeavyPanel.vue</code>（约 490KB 的生成 markup），
-      观察终端 <code>[DEBUG HMR before-vue]</code> / <code>[DEBUG HMR after-vue]</code>
-      与浏览器 <code>[TEST] beforeUpdate</code> / <code>[TEST] afterUpdate</code>。
+      Save <code>src/components/HeavyPanel.vue</code> (a ~484 KB generated template) over and over and watch
+      the terminal <code>[DEBUG HMR before-vue]</code> / <code>[DEBUG HMR after-vue]</code> lines and the
+      browser <code>[TEST] beforeUpdate</code> / <code>[TEST] afterUpdate</code> logs.
+      <span class="zh">
+        反复保存 <code>src/components/HeavyPanel.vue</code>（约 484KB 的生成模板），观察终端与浏览器的 HMR 日志。
+      </span>
     </p>
     <HeavyPanel />
   </main>
@@ -23,6 +26,12 @@ import HeavyPanel from './components/HeavyPanel.vue'
 .hint {
   color: #555;
   max-width: 90ch;
+}
+
+.zh {
+  display: block;
+  color: #888;
+  font-size: 13px;
 }
 
 code {

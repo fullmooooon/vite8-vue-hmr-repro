@@ -3,13 +3,15 @@
     <h2>HeavyPanel</h2>
     <p class="hmr-marker">HMR TEST 1</p>
     <p class="hmr-state">
-      点击计数 = <b>{{ count }}</b>
+      clicked = <b>{{ count }}</b>
       <button type="button" @click="bump">+1</button>
-      · 组件挂载时间 = {{ mountedAt }}
-      · 最近一次 HMR 事件 = {{ hmrLog || '（还没收到过）' }}
+      · component mounted at = {{ mountedAt }}
+      · last HMR event = {{ hmrLog || '(none yet)' }}
+      <span class="zh">（点击计数 · 组件挂载时间 · 最近一次 HMR 事件）</span>
     </p>
     <div class="grid">
-      <!-- 复现入口：反复注释 / 取消注释下面这个 toggle-block，保存后看页面顶部的计数与 HMR 事件 -->
+      <!-- reproduction entry: comment / uncomment this toggle-block, then save -->
+      <!-- 复现入口：反复注释 / 取消注释下面这个 toggle-block，保存后看页面顶部三行信息 -->
       <!-- <div id="toggle-block">
       <div class="row" data-row="r-0">
         <div class="cell" data-cell="c-0-0"><span class="cell__label">c-0-0</span><span class="cell__value">33.08</span></div>
@@ -4093,7 +4095,7 @@ import { ref } from 'vue'
 import Slot from './Slot.vue'
 import { config } from '../stores/config'
 
-/** 供脚本块编辑测试使用。 */
+/** Used by the probe's script-block edit mode. */
 const probeTick = 1
 const count = ref(0)
 const showSlot = config.showSlot
@@ -4104,7 +4106,7 @@ function bump() {
   count.value += 1
 }
 
-// 页面上直接显示最近一次 HMR 事件；被“吞掉”的那次保存不会有任何事件，也不会有任何刷新。
+// Show the last HMR event on the page; a swallowed save produces no event and no reload.
 if (import.meta.hot) {
   import.meta.hot.on('vite:beforeUpdate', () => {
     hmrLog.value = 'beforeUpdate ' + new Date().toLocaleTimeString()
@@ -4130,6 +4132,12 @@ if (import.meta.hot) {
 
 .hmr-state {
   font-size: 13px;
+}
+
+.zh {
+  display: block;
+  color: #777;
+  font-size: 12px;
 }
 
 .grid {

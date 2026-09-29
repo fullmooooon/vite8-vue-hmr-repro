@@ -1,32 +1,36 @@
 #!/usr/bin/env node
 /**
- * 最小复现探针（只用 Node 内置模块）。
+ * Minimal reproduction probe (Node built-ins only).
  *
- * 它像一个浏览器那样：请求 index.html 及整个 import 图、连真实 HMR WebSocket，
- * 然后按指定的“保存方式”反复改 src/components/HeavyPanel.vue，并记录每次保存：
- *   - [DEBUG HMR before-vue] / [DEBUG HMR after-vue] 看到的模块
- *   - client 实际收到的 HMR payload
- *   - 结果分类：ok / no-payload（被吞掉）/ modules-lost / full-reload
- * 结果写入 probe-output/report.json 与 report.log。
+ * It acts like a browser: fetches index.html plus the whole import graph, opens a real
+ * HMR WebSocket, then repeatedly saves src/components/HeavyPanel.vue with the configured
+ * write pattern and records, for every save:
+ *   - the modules seen by [DEBUG HMR before-vue] / [DEBUG HMR after-vue]
+ *   - the HMR payload the client really receives
+ *   - a class: ok / no-payload (swallowed) / modules-lost / full-reload
+ * Results are written to probe-output/report.json and probe-output/report.log.
  *
- * 用法：
- *   npm run probe              # 复现：反复注释 toggle-block + 非原子写（默认参数就是最坏情况）
- *   npm run probe:fixed        # 同上，但开启 server.watch.awaitWriteFinish（应全绿）
- *   npm run probe:direct       # 同上，但一次性写入（应全绿，用来反证是“写盘方式”导致的）
- *   npm run probe:template     # 只改 HMR TEST 数字的小改动（应全绿）
+ * Scripts:
+ *   npm run probe             # reproduce: toggle the big block + non-atomic save
+ *   npm run probe:fixed       # same, with server.watch.awaitWriteFinish (the fix)
+ *   npm run probe:direct      # same, but a single write (proves the write pattern matters)
+ *   npm run probe:template    # small edits (HMR TEST n) only
  *
- * 开关：
- *   --mode=toggle|template      改哪个块（默认 toggle：注释/取消注释大块）
+ * Flags:
+ *   --mode=toggle|template     which block to edit (default: toggle)
  *   --write=chunked|direct|replace
- *                               保存方式（默认 chunked：先写一半、停一下、再写另一半，
- *                               这样磁盘上会短暂出现“半截文件”，模拟大文件被非原子保存）
- *   --chunk-delay=MS            chunked 两次写之间的停顿（默认 5ms）
- *   --gap=MS                    两次保存之间的间隔（默认 0）
- *   --edits=N                   保存次数（默认 15）
- *   --settle=MS                 每次保存后等待 payload 的上限（默认 5000ms）
- *   --await-write-finish=MS     给 server.watch 加上 awaitWriteFinish（修复对照）
- *   --port=N                    端口（默认 5273）
- *   --debug                     打开 DEBUG=vite:hmr
+ *                              how the file is saved (default: chunked = write half,
+ *                              pause, write the rest, so the file is briefly incomplete
+ *                              on disk, like a big file saved non-atomically)
+ *   --chunk-delay=MS           pause inside a chunked write (default: 5)
+ *   --gap=MS                   pause between two saves (default: 0)
+ *   --edits=N                  number of saves (default: 15)
+ *   --settle=MS                max wait for a payload after each save (default: 5000)
+ *   --await-write-finish=MS    add server.watch.awaitWriteFinish (the fix)
+ *   --port=N                   dev server port (default: 5273)
+ *   --debug                    set DEBUG=vite:hmr
+ *
+ * 中文说明见 README 的「中文说明」一节。
  */
 
 import { mkdir, open, readFile, rename, writeFile } from 'node:fs/promises'
@@ -63,7 +67,7 @@ const opts = {
   debug: args.debug === 'true',
 }
 
-// Vite 的 debug logger 在加载时会读 process.env.DEBUG，所以必须先设置再 import。
+// Vite's debug logger reads process.env.DEBUG when it is loaded, so set it before importing.
 if (opts.debug) process.env.DEBUG ??= 'vite:hmr'
 const { createServer, normalizePath } = await import('vite')
 
@@ -71,11 +75,11 @@ const sfcAbs = path.join(ROOT, FIXTURE.sfc)
 const sfcUrl = '/' + normalizePath(FIXTURE.sfc)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-// --- 夹具：一大块放在 <template> 最前面的静态内容 ---------------------------
+// --- fixture: one big static block at the very beginning of <template> -------
 const BLOCK_START = '<div id="toggle-block">'
 const BLOCK_NEXT = '<div id="after-toggle"'
 
-/** 注释 / 取消注释 `<!-- <div id="toggle-block"> … </div> -->` */
+/** Comment / uncomment `<!-- <div id="toggle-block"> … </div> -->`. */
 function toggleBlock(source) {
   const commentedStart = `<!-- ${BLOCK_START}`
   const cIdx = source.indexOf(commentedStart)
@@ -117,7 +121,7 @@ function applyEdit(source, mode, index) {
   throw new Error(`unknown --mode=${mode}`)
 }
 
-/** 按指定方式保存（见 --write）。 */
+/** Save the fixture using the configured write pattern (see --write). */
 async function writeSfc(text) {
   if (opts.write === 'replace') {
     const tmp = `${sfcAbs}.${process.pid}.tmp`
@@ -141,7 +145,7 @@ async function writeSfc(text) {
   await writeFile(sfcAbs, text, 'utf8')
 }
 
-// --- 采集：插件日志 / HMR payload / Vite logger -----------------------------
+// --- capture: plugin logs / HMR payloads / Vite logger ----------------------
 const rawLines = []
 function raw(line) {
   rawLines.push(line)
@@ -157,8 +161,8 @@ if (opts.debug) {
 }
 
 const hookRecords = [] // { at, name, modules }
-const payloads = [] // { at, payload }（推给 client environment 的）
-const wsPayloads = [] // { at, payload }（浏览器真的收到的）
+const payloads = [] // { at, payload } pushed into the client environment
+const wsPayloads = [] // { at, payload } the browser really receives
 const loggerLines = []
 
 const originalLog = console.log
@@ -171,7 +175,7 @@ console.log = (...parts) => {
   originalLog(text)
 }
 
-/** 浏览器行为 1：请求 index.html 并沿 import 图把模块都拉一遍（填 client env 的 module graph）。 */
+/** Browser behaviour 1: fetch index.html and follow the import graph (fills the client env graph). */
 async function warmUp(baseUrl) {
   const html = await (await fetch(new URL(FIXTURE.html, baseUrl))).text()
   const queue = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => new URL(m[1], baseUrl).href)
@@ -199,7 +203,7 @@ async function warmUp(baseUrl) {
   }
 }
 
-/** 浏览器行为 2：连真实 HMR WebSocket，收集 client 实际收到的 payload。 */
+/** Browser behaviour 2: connect a real HMR WebSocket and collect the payloads it receives. */
 function connectHmrSocket(baseUrl) {
   const wsUrl = new URL('/', baseUrl).href.replace(/^http/, 'ws')
   return new Promise((resolve) => {
@@ -268,7 +272,7 @@ async function main() {
   const socket = await connectHmrSocket(baseUrl)
   raw(`# hmr websocket: ${socket ? 'connected' : 'FAILED (fallback: hot-channel patch)'}\n`)
 
-  /** 等一次“新的” payload（只看 fromWs/fromPush 之后到达的）。 */
+  /** Wait for a *new* real payload (only those arriving after fromWs/fromPush). */
   async function waitForPayload(fromWs, fromPush, timeout) {
     const deadline = Date.now() + timeout
     while (Date.now() < deadline) {
@@ -297,7 +301,8 @@ async function main() {
 
   const records = []
   try {
-    // 预热 watcher：刚起的 server 会漏掉最初几次写盘事件，先做一次真实改动并等它消化完。
+    // Prime the watcher: a freshly started server misses the first write events, so make a
+    // real change first and wait until it settles.
     raw('# priming watcher ...')
     for (let i = 0; i < 6; i++) {
       const fromWs = wsPayloads.length
@@ -381,8 +386,9 @@ async function main() {
   )
   await writeFile(path.join(outDir, 'report.log'), rawLines.join('\n') + '\n', 'utf8')
 
-  raw(`\n# 结果: ${JSON.stringify(counts)}`)
-  raw(`# ${opts.edits} 次保存里 ${failed} 次 HMR 被吞 / 丢模块（ok=${counts.ok ?? 0}）`)
+  raw(`\n# result: ${JSON.stringify(counts)}`)
+  raw(`# ${failed} of ${opts.edits} saves lost their HMR update (ok=${counts.ok ?? 0})`)
+  raw(`# 结果：${opts.edits} 次保存里 ${failed} 次 HMR 被吞 / 丢模块（ok=${counts.ok ?? 0}）`)
   raw(`# report: ${path.join(outDir, 'report.json')}`)
 
   console.log = originalLog

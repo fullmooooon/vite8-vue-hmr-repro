@@ -33,10 +33,13 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     port: 5173,
-    // 大文件（例如 552KB 的内联 SVG SFC）非原子保存时，watcher 事件可能落在
-    // “文件只写了一半”的窗口里，Vite 会读到被截断的内容，plugin-vue 因此认为
-    // “没有变化”而吞掉这次 HMR。默认保持与问题报告一致的配置；如果你的编辑器
-    // 保存大文件时容易命中，取消下面注释即可（实测能把 14/15 被吞变成 15/15 正常）：
+    // Big files are saved non-atomically: the watcher can fire while the file is only
+    // half written, Vite then reads a truncated file and plugin-vue concludes "nothing
+    // changed", so this HMR update is swallowed. Keep the line below commented out to
+    // reproduce the bug (that is the reported setup); un-comment it to fix it
+    // (measured: 7/15 swallowed -> 15/15 fine).
+    // 说明：大文件非原子保存时，watcher 可能落在“只写了一半”的窗口里，Vite 读到截断内容，
+    // plugin-vue 因此认为“没有变化”而吞掉这次 HMR。保持注释 = 复现；取消注释 = 修复。
     // watch: { awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 10 } },
   },
 })
