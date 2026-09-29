@@ -8,12 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "gen": "node scripts/generate-big-fixture.mjs",
-    "probe": "node scripts/hmr-probe.mjs --edits=15 --mode=template",
-    "probe:style": "node scripts/hmr-probe.mjs --edits=12 --mode=style",
-    "probe:big": "node scripts/hmr-probe.mjs --edits=12 --mode=toggle --gap=300",
-    "probe:big:fast": "node scripts/hmr-probe.mjs --edits=15 --mode=toggle --gap=0 --write-mode=chunked --chunk-delay=5",
-    "probe:big:fix": "node scripts/hmr-probe.mjs --edits=15 --mode=toggle --gap=0 --write-mode=chunked --chunk-delay=5 --await-write-finish=150",
-    "probe:debug": "node scripts/hmr-probe.mjs --edits=4 --mode=template --debug"
+    "probe": "node scripts/hmr-probe.mjs",
+    "probe:fixed": "node scripts/hmr-probe.mjs --await-write-finish=150",
+    "probe:direct": "node scripts/hmr-probe.mjs --write=direct",
+    "probe:template": "node scripts/hmr-probe.mjs --mode=template --write=direct"
   },
   "dependencies": {
     "vue": "3.5.24"

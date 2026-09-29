@@ -40,8 +40,8 @@ src/
    └─ Slot.vue
 scripts/
 ├─ generate-big-fixture.mjs # 生成 HeavyPanel.vue（确定性，无任何业务/原创内容）
-├─ hmr-probe.mjs            # 自动化 HMR 探针（只用 Node 内置模块）
-└─ diagnostic-plugin.ts     # 贴到真实项目里的只读诊断插件
+├─ hmr-probe.mjs            # 复现探针（只用 Node 内置模块）
+└─ diagnostic-plugin.ts     # 可选：贴到真实项目里排查用的只读插件（复现本身不需要）
 ```
 
 `vite.config.ts` 就是问题报告里那份：`[debugHmr('before-vue'), vue(), debugHmr('after-vue')]`，
@@ -61,18 +61,17 @@ debug 插件只打印、不返回 `ctx.modules`（返回会改变 HMR 行为）�
 ### 自动（一条命令）
 
 ```powershell
-npm run probe:big        # 大块注释切换，一次性写入 → 通常全绿
-npm run probe:big:fast   # 大块注释切换 + 非原子写 + 连续保存 → 复现（实测 15 次里 10 次异常，时序相关）
-npm run probe:big:fix    # 同上 + awaitWriteFinish → 全绿（实测 15/15）
-npm run probe            # 普通小改动（HMR TEST n），15 次
-npm run probe:style      # 只改 <style scoped>
-npm run probe:debug      # 带 DEBUG=vite:hmr
+npm run probe           # 复现：反复注释 toggle-block + 非原子写（一次实测：15 次里 7 次被吞，时序相关）
+npm run probe:fixed     # 同一场景 + server.watch.awaitWriteFinish → 15/15 正常
+npm run probe:direct    # 同一场景但一次性写入 → 15/15 正常（反证问题出在“写盘方式”）
+npm run probe:template  # 只改 HMR TEST 数字 → 15/15 正常（反证小改动没问题）
 ```
 
-探针会像浏览器一样请求页面与整个 import 图、连真实 HMR WebSocket，对每次保存记录 `before-vue` /
-`after-vue` 模块、client/ssr 环境的模块、client payload，并用 Vite 客户端的方式
-（`import(acceptedPath + '?t=' + timestamp)`）复拉一次模块，检查是否拿到旧代码。
-结果写到 `probe-output/report-report.json` 与 `report-raw.log`（已 gitignore）。
+探针会给每次保存分类：`ok` / `no-payload`（被吞）/ `modules-lost` / `full-reload` / `not-detected`，
+并把每次的 `before-vue`、`after-vue`、client payload、Vite logger 行写到
+`probe-output/report.json` 与 `report.log`（已 gitignore）；只要有被吞的保存，进程退出码就是 2。
+开关（都有默认值，默认即最坏情况）：`--mode=toggle|template`、`--write=chunked|direct|replace`
+（`--chunk-delay=MS`）、`--gap=MS`、`--edits=N`、`--await-write-finish=MS`、`--settle=MS`、`--port=N`、`--debug`。
 
 ## 原因与修复
 
@@ -93,12 +92,12 @@ server: {
 }
 ```
 
-实测：最恶劣的一档（非原子写 + 连续保存）从 **15 次里 10 次异常** 变成 **15/15 正常**。
+实测：同一场景（`npm run probe`）一次 15 次里 **7 次被吞**，加上 `awaitWriteFinish` 后 **15/15 正常**。
 
 **修复 B** —— 让编辑器**原子保存**（写临时文件再 rename）：实测 12/12 正常。
 
 **上游修复方向** —— `readModifiedFile()` 目前只对“空内容”重试，建议把“读取期间内容仍在增长 / mtime 又变化”
-也纳入重试，或默认开启 `awaitWriteFinish`。本仓库 + `probe-output/report-raw.log` 可直接作为 issue 附件。
+也纳入重试，或默认开启 `awaitWriteFinish`。本仓库 + `probe-output/report.log` 可直接作为 issue 附件。
 
 ## 诊断插件
 
@@ -111,4 +110,6 @@ client 与 ssr 环境各自的模块、以及“同一文件是否存在多个�
 
 - 夹具由 [generate-big-fixture.mjs](scripts/generate-big-fixture.mjs) 生成，是**合成 markup**（`c-0-0` 这类假数据 + 数字，
   无内联样式），不含任何真实业务/美术内容；想调大小就 `npm run gen -- --cells=6000`。
+- 保持最小：依赖只有 `vite` / `vue` / `@vitejs/plugin-vue`（锁定版本），仓库里除生成的夹具外只有几个小文件；
+  探针只保留复现需要的开关（`toggle/template` × `chunked/direct` × `awaitWriteFinish` × 次数/间隔）。
 - `probe-output/`、`.local/` 已 gitignore。
