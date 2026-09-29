@@ -59,6 +59,11 @@ for (let row = 0; row < Math.ceil(CELLS / 20); row++) {
     body.push('      <!-- reproduction entry: comment / uncomment this toggle-block, then save -->')
     body.push('      <!-- 复现入口：反复注释 / 取消注释下面这个 toggle-block，保存后看页面顶部三行信息 -->')
     body.push('      <!-- <div id="toggle-block">')
+    body.push(
+      '      <div class="row row--banner" data-banner="toggle-block"><span class="banner">' +
+        'toggle-block is RENDERED — comment it out and save; if this banner is still here, that save was swallowed' +
+        '</span></div>',
+    )
   }
   body.push(`      <div class="row" data-row="r-${row}">`)
   for (let col = 0; col < COLS && row * COLS + col < CELLS; col++) {
@@ -147,6 +152,13 @@ if (import.meta.hot) {
 .row {
   display: flex;
   gap: 4px;
+}
+
+.row--banner .banner {
+  border: 1px solid #cc0;
+  background: #ffd;
+  padding: 2px 6px;
+  font-weight: 700;
 }
 
 .cell {

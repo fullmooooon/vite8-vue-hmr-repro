@@ -50,9 +50,10 @@ scripts/
 
 ### Manually
 
-1. Open `src/components/HeavyPanel.vue`: the **first block inside `.grid`** is the reproduction entry (search for `reproduction entry`). Comment / uncomment `<!-- <div id="toggle-block"> … </div> -->` and save 10–20 times (the faster you save, the more likely you hit it).
-2. The two lines at the top of the page are the indicators (`0` is just the initial value — **click `+1` a few times first**, otherwise the counter proves nothing): `clicked` unchanged = HMR kept the component state; `component mounted at` changed = the component was reloaded; `last HMR event` not updating = this save did not trigger HMR at all (swallowed).
-3. Terminal: for a swallowed save, `before-vue` lists modules, `after-vue` is `[]`, and the only log line is `(client) [no modules matched]` — the page does not change.
+1. Open `src/components/HeavyPanel.vue`: the **first thing inside `.grid`** is the reproduction entry (search for `reproduction entry` / `复现入口`). Comment / uncomment the `<!-- <div id="toggle-block"> … </div> -->` wrapper around that block and save — **a few saves (2–5) are usually enough**, no need for 20.
+2. **Watch the banner**: the yellow `toggle-block is RENDERED …` banner lives *inside* the toggled block and is the first thing in the grid. Comment the block out, save, and look at the page: if the banner is still rendered, that save was swallowed (nothing changed). This is the moment to look for.
+3. The two lines above the grid tell you more (`0` is just the initial value — **click `+1` a few times first**, otherwise the counter proves nothing): `clicked` unchanged = HMR kept the component state; `component mounted at` changed = the component was reloaded; `last HMR event` not updating = this save did not trigger HMR at all (swallowed).
+4. Terminal: for a swallowed save, `before-vue` lists modules, `after-vue` is `[]`, and the only log line is `(client) [no modules matched]` — the page does not change.
 
 ### Automatically (one command)
 
@@ -130,9 +131,10 @@ npm run gen        # 重新生成夹具（默认 3700 个 cell ≈ 484KB，`--ce
 
 ### 手动复现
 
-1. 打开 `src/components/HeavyPanel.vue`：`.grid` 里的**第一块内容**就是复现入口（源码里搜 `reproduction entry` / `复现入口`），反复**注释 / 取消注释** `<!-- <div id="toggle-block"> … </div> -->` 并保存 10~20 次（越快越容易命中）。
-2. 页面顶部两行是判据（`0` 只是初始值，**先点几下 `+1`** 才有意义）：`clicked` 不变 = HMR 保住了组件状态；`component mounted at` 变了 = 组件被整体 reload；`last HMR event` 时间不再更新 = 这次保存根本没触发 HMR（被吞掉）。
-3. 终端对照：被吞的那次是 `before-vue` 有模块、`after-vue` 是 `[]`、只有 `(client) [no modules matched]`，页面毫无变化。
+1. 打开 `src/components/HeavyPanel.vue`：`.grid` 里的**第一块内容**就是复现入口（源码里搜 `reproduction entry` / `复现入口`），把包着它的 `<!-- <div id="toggle-block"> … </div> -->` **注释 / 取消注释** 并保存 —— **一般几次（2~5 次）就能命中**，不用存 20 次。
+2. **盯横幅**：黄色 `toggle-block is RENDERED …` 横幅本身就在被注释的块里、位于 grid 最前面。把块注释掉并保存后看页面：**横幅还在 = 这次 HMR 被吞了**（什么都没变），这就是要抓的瞬间。
+3. 页面上方两行是更细的判据（`0` 只是初始值，**先点几下 `+1`** 才有意义）：`clicked` 不变 = HMR 保住了组件状态；`component mounted at` 变了 = 组件被整体 reload；`last HMR event` 时间不再更新 = 这次保存根本没触发 HMR（被吞掉）。
+4. 终端对照：被吞的那次是 `before-vue` 有模块、`after-vue` 是 `[]`、只有 `(client) [no modules matched]`，页面毫无变化。
 
 ### 自动复现
 

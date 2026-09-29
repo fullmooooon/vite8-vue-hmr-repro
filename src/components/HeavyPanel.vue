@@ -13,6 +13,7 @@
       <!-- reproduction entry: comment / uncomment this toggle-block, then save -->
       <!-- 复现入口：反复注释 / 取消注释下面这个 toggle-block，保存后看页面顶部三行信息 -->
       <!-- <div id="toggle-block">
+      <div class="row row--banner" data-banner="toggle-block"><span class="banner">toggle-block is RENDERED — comment it out and save; if this banner is still here, that save was swallowed</span></div>
       <div class="row" data-row="r-0">
         <div class="cell" data-cell="c-0-0"><span class="cell__label">c-0-0</span><span class="cell__value">33.08</span></div>
         <div class="cell" data-cell="c-0-1"><span class="cell__label">c-0-1</span><span class="cell__value">73.70</span></div>
@@ -4147,6 +4148,13 @@ if (import.meta.hot) {
 .row {
   display: flex;
   gap: 4px;
+}
+
+.row--banner .banner {
+  border: 1px solid #cc0;
+  background: #ffd;
+  padding: 2px 6px;
+  font-weight: 700;
 }
 
 .cell {
