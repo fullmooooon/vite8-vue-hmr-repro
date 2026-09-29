@@ -1,0 +1,25 @@
+{
+  "name": "vite8-vue-hmr-repro",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "gen": "node scripts/generate-big-fixture.mjs",
+    "probe": "node scripts/hmr-probe.mjs --edits=15 --mode=template",
+    "probe:style": "node scripts/hmr-probe.mjs --edits=12 --mode=style",
+    "probe:big": "node scripts/hmr-probe.mjs --edits=12 --mode=toggle --gap=300",
+    "probe:big:fast": "node scripts/hmr-probe.mjs --edits=15 --mode=toggle --gap=0 --write-mode=chunked --chunk-delay=5",
+    "probe:big:fix": "node scripts/hmr-probe.mjs --edits=15 --mode=toggle --gap=0 --write-mode=chunked --chunk-delay=5 --await-write-finish=150",
+    "probe:debug": "node scripts/hmr-probe.mjs --edits=4 --mode=template --debug"
+  },
+  "dependencies": {
+    "vue": "3.5.24"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.9",
+    "vite": "8.3.0"
+  }
+}
