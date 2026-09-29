@@ -2,9 +2,17 @@
   <section class="heavy-panel" :data-tick="probeTick">
     <h2>HeavyPanel</h2>
     <p class="hmr-marker">HMR TEST 1</p>
-    <p class="state">
-      组件状态（HMR 是否保留了它）：<b>{{ count }}</b>
+    <p class="hmr-hint">
+      HMR 自检：先点几下 <b>+1</b>，再保存本文件（改上面 “HMR TEST 数字”，或反复注释/取消注释下面的
+      <code>toggle-block</code>）。保存后看这一行：<b>计数不变</b> = HMR 保住了组件状态；
+      <b>计数变成 0 但 “组件挂载时间” 也变了</b> = 组件被整体 reload（状态丢失）；
+      <b>整页刷新（HMR 事件时间不再更新）</b> = full reload。
+    </p>
+    <p class="hmr-state">
+      点击计数 = <b>{{ count }}</b>
       <button type="button" @click="bump">+1</button>
+      · 组件挂载时间 = {{ mountedAt }}
+      · 最近一次 HMR 事件 = {{ hmrLog || '（还没收到过）' }}
     </p>
     <div class="grid">
       <div class="row" data-row="r-0">
@@ -2884,9 +2892,21 @@ import { config } from '../stores/config'
 const probeTick = 1
 const count = ref(0)
 const showSlot = config.showSlot
+const mountedAt = new Date().toLocaleTimeString()
+const hmrLog = ref('')
 
 function bump() {
   count.value += 1
+}
+
+// 页面上直接显示最近一次 HMR 事件；被“吞掉”的那次保存不会有任何事件，也不会有任何刷新。
+if (import.meta.hot) {
+  import.meta.hot.on('vite:beforeUpdate', () => {
+    hmrLog.value = 'beforeUpdate ' + new Date().toLocaleTimeString()
+  })
+  import.meta.hot.on('vite:afterUpdate', () => {
+    hmrLog.value = 'afterUpdate ' + new Date().toLocaleTimeString()
+  })
 }
 </script>
 
@@ -2901,6 +2921,21 @@ function bump() {
 .hmr-marker {
   font-weight: 700;
   letter-spacing: 0.05em;
+}
+
+.hmr-hint {
+  color: #555;
+  font-size: 13px;
+  max-width: 80ch;
+}
+
+.hmr-state {
+  font-size: 13px;
+}
+
+.hmr-hint code {
+  background: #eee;
+  padding: 0 3px;
 }
 
 .grid {

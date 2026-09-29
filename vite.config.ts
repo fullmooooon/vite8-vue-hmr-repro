@@ -23,7 +23,7 @@ const debugHmr = (name: string): Plugin => ({
       '\nfile:',
       ctx.file,
       '\nmodules:',
-      ctx.modules.map((m) => m.url),
+      ctx.modules.map((m) => m.url)
     )
   },
 })
