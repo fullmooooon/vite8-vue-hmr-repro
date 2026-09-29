@@ -29,6 +29,9 @@
  *   --await-write-finish=MS    add server.watch.awaitWriteFinish (the fix)
  *   --port=N                   dev server port (default: 5273)
  *   --debug                    set DEBUG=vite:hmr
+ *   --read-evidence            add a read-only `order:'pre'` observer that prints, for every
+ *                              HMR event, the file length on disk vs. what `ctx.read()`
+ *                              (i.e. Vite's `readModifiedFile`) actually returned
  *
  * 中文说明见 README 的「中文说明」一节。
  */
@@ -65,6 +68,7 @@ const opts = {
   awaitWriteFinish: Number(args['await-write-finish'] ?? 0),
   port: Number(args.port ?? 5273),
   debug: args.debug === 'true',
+  readEvidence: args['read-evidence'] === 'true',
 }
 
 // Vite's debug logger reads process.env.DEBUG when it is loaded, so set it before importing.
@@ -122,7 +126,9 @@ function applyEdit(source, mode, index) {
 }
 
 /** Save the fixture using the configured write pattern (see --write). */
+let expectedLength = 0
 async function writeSfc(text) {
+  expectedLength = text.length
   if (opts.write === 'replace') {
     const tmp = `${sfcAbs}.${process.pid}.tmp`
     await writeFile(tmp, text, 'utf8')
@@ -234,9 +240,38 @@ async function main() {
   const originalSfc = await readFile(sfcAbs, 'utf8')
   raw(`# probe: ${opts.mode} / write=${opts.write}(${opts.chunkDelay}ms) / edits=${opts.edits} / awaitWriteFinish=${opts.awaitWriteFinish || 'off'}`)
 
+  // Optional read-only observer: shows that Vite can read a half-written file.
+  // It must not await anything inside the hook, otherwise it would slow down the HMR
+  // pipeline (and thereby change the race it is meant to observe).
+  const readEvidence = {
+    name: 'read-evidence',
+    handleHotUpdate: {
+      order: 'pre',
+      handler(ctx) {
+        const startedAt = Date.now()
+        void (async () => {
+          try {
+            const onDisk = await readFile(ctx.file, 'utf8')
+            const viaRead = await ctx.read()
+            raw(
+              `# read-evidence(+${Date.now() - startedAt}ms): expected=${expectedLength} chars, ` +
+                `onDisk=${onDisk.length} chars, ctx.read()=${viaRead.length} chars, ` +
+                `fileHalfWritten=${onDisk.length !== expectedLength}, ` +
+                `viteReadTruncated=${viaRead.length !== expectedLength}, ` +
+                `legacyModules=${JSON.stringify(ctx.modules.map((m) => m.url))}`,
+            )
+          } catch (error) {
+            raw(`# read-evidence failed: ${error.message}`)
+          }
+        })()
+      },
+    },
+  }
+
   const server = await createServer({
     configFile: path.join(ROOT, 'vite.config.ts'),
     logLevel: 'info',
+    plugins: opts.readEvidence ? [readEvidence] : [],
     server: {
       host: '127.0.0.1',
       port: opts.port,

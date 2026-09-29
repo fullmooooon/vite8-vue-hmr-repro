@@ -65,6 +65,13 @@ npm run probe:template  # only the `HMR TEST n` number changes -> 15/15 fine
 
 The probe classifies every save (`ok` / `no-payload` / `modules-lost` / `full-reload` / `not-detected`), writes `probe-output/report.json` and `probe-output/report.log`, and exits with code **2** if any save was swallowed. Flags (the defaults are already the worst case): `--mode=toggle|template`, `--write=chunked|direct|replace` (`--chunk-delay=MS`), `--gap=MS`, `--edits=N`, `--await-write-finish=MS`, `--settle=MS`, `--port=N`, `--debug`.
 
+Add `--read-evidence` to also print, for every HMR event, what the file looked like on disk vs. what Vite's `readModifiedFile()` (`ctx.read()`) actually returned — this is the raw proof that Vite can hand a half-written / stale file to plugins:
+
+```text
+# read-evidence(+14ms): expected=499597 chars, onDisk=499595 chars, ctx.read()=499595 chars, fileHalfWritten=true, viteReadTruncated=true, ...
+# read-evidence(+50ms): expected=499595 chars, onDisk=249797 chars, ctx.read()=499595 chars, fileHalfWritten=true, viteReadTruncated=false, ...
+```
+
 ## Cause and fix
 
 Vite's HMR file reader `readModifiedFile()` retries **only when the content is empty**. While a large file is being saved it is briefly incomplete on disk; if the watcher fires inside that window, Vite treats the half-written content as the whole file (measured on a 552 KB fixture: `ctx.read()` returned `276013` of `552027` characters — exactly the first half). `@vitejs/plugin-vue` caches that truncated descriptor in its internal `hmrCache`, and the next event is compared against it:
