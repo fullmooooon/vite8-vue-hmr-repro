@@ -81,6 +81,10 @@ Vite's HMR file reader `readModifiedFile()` retries **only when the content is e
 
 **Fix A (recommended, one line)** — let chokidar wait until the file stops changing. The line is already in `vite.config.ts`, commented out:
 
+### Does the file size matter?
+
+On the editor side, yes: the window during which the file is incomplete on disk is the duration of the save, and that grows with the size (a plain `fs.writeFile` of this fixture measures **0.80 ms at 157 KB, 1.96 ms at 484 KB, 2.57 ms at 918 KB, 5.17 ms at 1.8 MB** on this machine; VS Code adds its own I/O on top, plus AV/file-sync on Windows). In the reproduction the race is triggered on purpose, so it fails at any size — measured: **157 KB → 14/15 swallowed, 484 KB → 14/15, 918 KB → 12/15** — while one non-chunked write is always fine (`npm run probe:direct`, 484 KB → 0/15). Sweep the size yourself with `npm run gen -- --cells=N` (1200 ≈ 157 KB, 3700 ≈ 484 KB, 7000 ≈ 918 KB).
+
 ```ts
 server: {
   host: '127.0.0.1',
@@ -152,6 +156,8 @@ server: { watch: { awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 10
 ```
 
 实测：同一场景从 **15 次里 7~15 次被吞**（每次运行会浮动）变成 **15/15 正常**。
+
+**文件大小的影响**：磁盘上"半截"窗口 = 一次保存的耗时，而耗时随体积增长（本机实测 `fs.writeFile`：157KB 0.80ms / 484KB 1.96ms / 918KB 2.57ms / 1.8MB 5.17ms；VS Code 自己还有额外 I/O，Windows 上还可能叠加杀软/同步盘的扫描）。探针里这个竞态是刻意制造的，所以在任何体积下都会失败（157KB 14/15、484KB 14/15、918KB 12/15），而一次性写入始终正常（`npm run probe:direct`，484KB 0/15）。想自己扫体积：`npm run gen -- --cells=N`（1200≈157KB、3700≈484KB、7000≈918KB）。
 
 **修复 B**：让编辑器原子保存（写临时文件再 rename），实测 15/15 正常。
 
