@@ -20,7 +20,8 @@ const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)))
 const OUT = path.join(ROOT, 'src/components/HeavyPanel.vue')
 
 const cellsArg = process.argv.find((a) => a.startsWith('--cells='))
-const CELLS = Number(cellsArg?.split('=')[1] ?? 2600)
+// default keeps the generated SFC at roughly 490 KiB (plain markup, no inline styles)
+const CELLS = Number(cellsArg?.split('=')[1] ?? 3700)
 const COLS = 20
 const ROWS = Math.ceil(CELLS / COLS)
 // The toggle block sits at the very beginning of the grid, on whole row
@@ -39,7 +40,6 @@ function mulberry32(seed) {
 }
 
 const rand = mulberry32(20260929)
-const hex = () => Math.floor(rand() * 0xffffff).toString(16).padStart(6, '0')
 
 function cell(row, col) {
   const id = `c-${row}-${col}`
@@ -48,7 +48,6 @@ function cell(row, col) {
     `        <div class="cell" data-cell="${id}">` +
     `<span class="cell__label">${id}</span>` +
     `<span class="cell__value">${value}</span>` +
-    `<span class="cell__tint" style="background:#${hex()}"></span>` +
     `</div>`
   )
 }

@@ -24,7 +24,7 @@
 ```powershell
 npm install
 npm run dev        # http://127.0.0.1:5173
-npm run gen        # 重新生成大夹具（默认 2600 个 cell ≈ 490KB，可加 --cells=5200）
+npm run gen        # 重新生成大夹具（默认 3700 个 cell ≈ 484KB，可加 --cells=6000 调大）
 ```
 
 ## 结构
@@ -36,7 +36,7 @@ src/
 ├─ assets/index.css
 ├─ stores/config.ts
 └─ components/
-   ├─ HeavyPanel.vue        # 大夹具：约 490KB 生成 markup + <script setup lang="ts"> + <style scoped>
+├─ HeavyPanel.vue        # 大夹具：约 484KB 生成 markup + <script setup lang="ts"> + <style scoped>
    └─ Slot.vue
 scripts/
 ├─ generate-big-fixture.mjs # 生成 HeavyPanel.vue（确定性，无任何业务/原创内容）
@@ -62,7 +62,7 @@ debug 插件只打印、不返回 `ctx.modules`（返回会改变 HMR 行为）�
 
 ```powershell
 npm run probe:big        # 大块注释切换，一次性写入 → 通常全绿
-npm run probe:big:fast   # 大块注释切换 + 非原子写 + 连续保存 → 复现（实测 15 次里 14 次异常）
+npm run probe:big:fast   # 大块注释切换 + 非原子写 + 连续保存 → 复现（实测 15 次里 10 次异常，时序相关）
 npm run probe:big:fix    # 同上 + awaitWriteFinish → 全绿（实测 15/15）
 npm run probe            # 普通小改动（HMR TEST n），15 次
 npm run probe:style      # 只改 <style scoped>
@@ -93,7 +93,7 @@ server: {
 }
 ```
 
-实测：最恶劣的一档（非原子写 + 连续保存）从 **15 次里 14 次异常** 变成 **15/15 正常**。
+实测：最恶劣的一档（非原子写 + 连续保存）从 **15 次里 10 次异常** 变成 **15/15 正常**。
 
 **修复 B** —— 让编辑器**原子保存**（写临时文件再 rename）：实测 12/12 正常。
 
@@ -109,6 +109,6 @@ client 与 ssr 环境各自的模块、以及“同一文件是否存在多个�
 
 ## 备注
 
-- 夹具由 [generate-big-fixture.mjs](scripts/generate-big-fixture.mjs) 生成，是**合成 markup**（`c-0-0` 这类假数据），
-  不含任何真实业务/美术内容；想调大小就 `npm run gen -- --cells=5200`。
+- 夹具由 [generate-big-fixture.mjs](scripts/generate-big-fixture.mjs) 生成，是**合成 markup**（`c-0-0` 这类假数据 + 数字，
+  无内联样式），不含任何真实业务/美术内容；想调大小就 `npm run gen -- --cells=6000`。
 - `probe-output/`、`.local/` 已 gitignore。
