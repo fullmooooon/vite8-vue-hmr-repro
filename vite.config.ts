@@ -38,8 +38,6 @@ export default defineConfig({
     // changed", so this HMR update is swallowed. Keep the line below commented out to
     // reproduce the bug (that is the reported setup); un-comment it to fix it
     // (measured: 7/15 swallowed -> 15/15 fine).
-    // 说明：大文件非原子保存时，watcher 可能落在“只写了一半”的窗口里，Vite 读到截断内容，
-    // plugin-vue 因此认为“没有变化”而吞掉这次 HMR。保持注释 = 复现；取消注释 = 修复。
     // watch: { awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 10 } },
   },
 })

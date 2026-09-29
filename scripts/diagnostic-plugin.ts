@@ -29,7 +29,6 @@
  *      SSR side loaded the file through an absolute path.
  *   4. What do the client and ssr environment module lists look like?
  *
- * 中文说明见 README 的「中文说明」一节。
  */
 
 import path from 'node:path'

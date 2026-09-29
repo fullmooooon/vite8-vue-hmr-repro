@@ -33,7 +33,6 @@
  *                              HMR event, the file length on disk vs. what `ctx.read()`
  *                              (i.e. Vite's `readModifiedFile`) actually returned
  *
- * 中文说明见 README 的「中文说明」一节。
  */
 
 import { mkdir, open, readFile, rename, writeFile } from 'node:fs/promises'
@@ -423,7 +422,6 @@ async function main() {
 
   raw(`\n# result: ${JSON.stringify(counts)}`)
   raw(`# ${failed} of ${opts.edits} saves lost their HMR update (ok=${counts.ok ?? 0})`)
-  raw(`# 结果：${opts.edits} 次保存里 ${failed} 次 HMR 被吞 / 丢模块（ok=${counts.ok ?? 0}）`)
   raw(`# report: ${path.join(outDir, 'report.json')}`)
 
   console.log = originalLog

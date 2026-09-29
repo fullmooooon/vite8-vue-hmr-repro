@@ -108,6 +108,7 @@ Measured: the same scenario goes from **7–15 of 15 saves swallowed** (varies p
 
 - The fixture is generated synthetic markup (`c-0-0` + numbers, no inline styles): no real business or artwork content. Scale it with `npm run gen -- --cells=6000`.
 - Kept minimal: only `vite` / `vue` / `@vitejs/plugin-vue`, 16 files, one generated fixture; the probe keeps only the switches the reproduction needs.
+- All sample code (everything under `src/`, `vite.config.ts` and the scripts) is **English-only**; this README is the only file that also carries Chinese, in the collapsible section below.
 - `probe-output/` and `.local/` are gitignored.
 
 <details>
@@ -131,7 +132,7 @@ npm run gen        # 重新生成夹具（默认 3700 个 cell ≈ 484KB，`--ce
 
 ### 手动复现
 
-1. 打开 `src/components/HeavyPanel.vue`：`.grid` 里的**第一块内容**就是复现入口（源码里搜 `reproduction entry` / `复现入口`），把包着它的 `<!-- <div id="toggle-block"> … </div> -->` **注释 / 取消注释** 并保存 —— **一般几次（2~5 次）就能命中**，不用存 20 次。
+1. 打开 `src/components/HeavyPanel.vue`：`.grid` 里的**第一块内容**就是复现入口（源码里搜 `reproduction entry`），把包着它的 `<!-- <div id="toggle-block"> … </div> -->` **注释 / 取消注释** 并保存 —— **一般几次（2~5 次）就能命中**，不用存 20 次。
 2. **盯横幅**：黄色 `toggle-block is RENDERED …` 横幅本身就在被注释的块里、位于 grid 最前面。把块注释掉并保存后看页面：**横幅还在 = 这次 HMR 被吞了**（什么都没变），这就是要抓的瞬间。
 3. 页面上方两行是更细的判据（`0` 只是初始值，**先点几下 `+1`** 才有意义）：`clicked` 不变 = HMR 保住了组件状态；`component mounted at` 变了 = 组件被整体 reload；`last HMR event` 时间不再更新 = 这次保存根本没触发 HMR（被吞掉）。
 4. 终端对照：被吞的那次是 `before-vue` 有模块、`after-vue` 是 `[]`、只有 `(client) [no modules matched]`，页面毫无变化。
@@ -169,6 +170,7 @@ server: { watch: { awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 10
 
 - 夹具由 `scripts/generate-big-fixture.mjs` 生成，是合成 markup（`c-0-0` + 数字，无内联样式），不含任何真实业务/美术内容。
 - 保持最小：依赖只有三个并锁定版本，共 16 个受控文件，夹具一个文件生成；探针只保留复现需要的开关。
+- 示例代码（`src/`、`vite.config.ts`、`scripts/`）**只有英文**；中文只出现在本 README 的折叠区。
 - `probe-output/`、`.local/` 已 gitignore。
 
 </details>

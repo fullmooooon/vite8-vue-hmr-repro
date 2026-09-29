@@ -7,11 +7,9 @@
       <button type="button" @click="bump">+1</button>
       · component mounted at = {{ mountedAt }}
       · last HMR event = {{ hmrLog || '(none yet)' }}
-      <span class="zh">（点击计数 · 组件挂载时间 · 最近一次 HMR 事件）</span>
     </p>
     <div class="grid">
       <!-- reproduction entry: comment / uncomment this toggle-block, then save -->
-      <!-- 复现入口：反复注释 / 取消注释下面这个 toggle-block，保存后看页面顶部三行信息 -->
       <!-- <div id="toggle-block">
       <div class="row row--banner" data-banner="toggle-block"><span class="banner">toggle-block is RENDERED — comment it out and save; if this banner is still here, that save was swallowed</span></div>
       <div class="row" data-row="r-0">
@@ -4133,12 +4131,6 @@ if (import.meta.hot) {
 
 .hmr-state {
   font-size: 13px;
-}
-
-.zh {
-  display: block;
-  color: #777;
-  font-size: 12px;
 }
 
 .grid {

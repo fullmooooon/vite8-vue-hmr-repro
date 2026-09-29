@@ -5,9 +5,6 @@
       Save <code>src/components/HeavyPanel.vue</code> (a ~484 KB generated template) over and over and watch
       the terminal <code>[DEBUG HMR before-vue]</code> / <code>[DEBUG HMR after-vue]</code> lines and the
       browser <code>[TEST] beforeUpdate</code> / <code>[TEST] afterUpdate</code> logs.
-      <span class="zh">
-        反复保存 <code>src/components/HeavyPanel.vue</code>（约 484KB 的生成模板），观察终端与浏览器的 HMR 日志。
-      </span>
     </p>
     <HeavyPanel />
   </main>
@@ -26,12 +23,6 @@ import HeavyPanel from './components/HeavyPanel.vue'
 .hint {
   color: #555;
   max-width: 90ch;
-}
-
-.zh {
-  display: block;
-  color: #888;
-  font-size: 13px;
 }
 
 code {
