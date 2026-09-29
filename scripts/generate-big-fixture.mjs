@@ -21,8 +21,12 @@ const OUT = path.join(ROOT, 'src/components/HeavyPanel.vue')
 
 const cellsArg = process.argv.find((a) => a.startsWith('--cells='))
 const CELLS = Number(cellsArg?.split('=')[1] ?? 2600)
-const TOGGLE_FROM = Math.floor(CELLS * 0.12)
-const TOGGLE_TO = Math.floor(CELLS * 0.34)
+const COLS = 20
+const ROWS = Math.ceil(CELLS / COLS)
+// The toggle block sits at the very beginning of the grid, on whole row
+// boundaries, so commenting it out keeps the remaining markup balanced.
+const TOGGLE_FROM_ROW = 0
+const TOGGLE_TO_ROW = Math.max(1, Math.round(ROWS * 0.22))
 
 function mulberry32(seed) {
   return function () {
@@ -51,29 +55,26 @@ function cell(row, col) {
 
 const body = []
 for (let row = 0; row < Math.ceil(CELLS / 20); row++) {
+  if (row === TOGGLE_FROM_ROW) {
+    body.push('      <!-- 复现入口：反复注释 / 取消注释下面这个 toggle-block，保存后看页面顶部的计数与 HMR 事件 -->')
+    body.push('      <!-- <div id="toggle-block">')
+  }
   body.push(`      <div class="row" data-row="r-${row}">`)
-  for (let col = 0; col < 20 && row * 20 + col < CELLS; col++) {
+  for (let col = 0; col < COLS && row * COLS + col < CELLS; col++) {
     const index = row * 20 + col
-    if (index === TOGGLE_FROM) body.push('      <!-- <div id="toggle-block">')
-    if (index === TOGGLE_TO) {
-      body.push('      </div> -->')
-      body.push('      <div id="after-toggle"></div>')
-    }
     body.push(cell(row, col))
   }
   body.push('      </div>')
+  if (row === TOGGLE_TO_ROW) {
+    body.push('      </div> -->')
+    body.push('      <div id="after-toggle"></div>')
+  }
 }
 
 const sfc = `<template>
   <section class="heavy-panel" :data-tick="probeTick">
     <h2>HeavyPanel</h2>
     <p class="hmr-marker">HMR TEST 1</p>
-    <p class="hmr-hint">
-      HMR 自检：先点几下 <b>+1</b>，再保存本文件（改上面 “HMR TEST 数字”，或反复注释/取消注释下面的
-      <code>toggle-block</code>）。保存后看这一行：<b>计数不变</b> = HMR 保住了组件状态；
-      <b>计数变成 0 但 “组件挂载时间” 也变了</b> = 组件被整体 reload（状态丢失）；
-      <b>整页刷新（HMR 事件时间不再更新）</b> = full reload。
-    </p>
     <p class="hmr-state">
       点击计数 = <b>{{ count }}</b>
       <button type="button" @click="bump">+1</button>
@@ -127,19 +128,8 @@ if (import.meta.hot) {
   letter-spacing: 0.05em;
 }
 
-.hmr-hint {
-  color: #555;
-  font-size: 13px;
-  max-width: 80ch;
-}
-
 .hmr-state {
   font-size: 13px;
-}
-
-.hmr-hint code {
-  background: #eee;
-  padding: 0 3px;
 }
 
 .grid {
@@ -163,5 +153,5 @@ await writeFile(OUT, sfc, 'utf8')
 const bytes = Buffer.byteLength(sfc, 'utf8')
 console.log(
   `generated ${path.relative(ROOT, OUT)}: ${(bytes / 1024).toFixed(1)} KiB, ${CELLS} cells, ` +
-    `toggle block = cells ${TOGGLE_FROM}..${TOGGLE_TO}`,
+    `toggle block = rows ${TOGGLE_FROM_ROW}..${TOGGLE_TO_ROW} (first ${(TOGGLE_TO_ROW + 1) * COLS} cells)`,
 )

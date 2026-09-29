@@ -51,21 +51,18 @@ debug 插件只打印、不返回 `ctx.modules`（返回会改变 HMR 行为）�
 
 ### 手动
 
-1. 打开 `src/components/HeavyPanel.vue`（约 490KB，搜索 `toggle-block`）；
-2. 页面顶部有个**自检面板**：先点几下 `+1`，再动文件，然后看这一行——
-   **计数不变** = HMR 保住了组件状态；**计数归 0 且“组件挂载时间”变了** = 组件被整体 reload（状态丢失）；
-   **“最近一次 HMR 事件”时间不再更新** = 这次保存根本没触发 HMR（被吞掉）。
-   所以计数一开始是 `0` 是正常的：**必须先点过 `+1`，它才有诊断意义**。
-3. 反复**注释 / 取消注释** `<!-- <div id="toggle-block"> … </div> -->` 这块并保存，10~20 次（保存越快越容易命中）；
-   也可以只改 `HMR TEST 1` 里的数字。
-4. 同时看终端 `[DEBUG HMR before-vue]` / `[DEBUG HMR after-vue]`、浏览器 `[TEST] beforeUpdate/afterUpdate`。
-   被吞掉的那次保存：`before-vue` 有模块、`after-vue` 是 `[]`、终端只有 `(client) [no modules matched]`，页面毫无变化。
+1. 打开 `src/components/HeavyPanel.vue`：`.grid` 里的**第一块内容**就是复现入口（源码里搜 `复现入口`），
+   反复**注释 / 取消注释** `<!-- <div id="toggle-block"> … </div> -->` 并保存，10~20 次（保存越快越容易命中）；
+2. 页面顶部两行是判据（`0` 是初始值，**先点几下 `+1`** 才有意义）：
+   `点击计数` 不变 = HMR 保住了组件状态；`组件挂载时间` 变了 = 组件被整体 reload；
+   `最近一次 HMR 事件` 时间不再更新 = 这次保存根本没触发 HMR（被吞掉）；
+3. 终端对照：被吞的那次是 `before-vue` 有模块、`after-vue` 是 `[]`、只有 `(client) [no modules matched]`，页面毫无变化。
 
 ### 自动（一条命令）
 
 ```powershell
 npm run probe:big        # 大块注释切换，一次性写入 → 通常全绿
-npm run probe:big:fast   # 大块注释切换 + 非原子写 + 连续保存 → 复现（实测 15 次里 12 次异常）
+npm run probe:big:fast   # 大块注释切换 + 非原子写 + 连续保存 → 复现（实测 15 次里 14 次异常）
 npm run probe:big:fix    # 同上 + awaitWriteFinish → 全绿（实测 15/15）
 npm run probe            # 普通小改动（HMR TEST n），15 次
 npm run probe:style      # 只改 <style scoped>
@@ -96,7 +93,7 @@ server: {
 }
 ```
 
-实测：最恶劣的一档（非原子写 + 连续保存）从 **15 次里 12 次异常** 变成 **15/15 正常**。
+实测：最恶劣的一档（非原子写 + 连续保存）从 **15 次里 14 次异常** 变成 **15/15 正常**。
 
 **修复 B** —— 让编辑器**原子保存**（写临时文件再 rename）：实测 12/12 正常。
 

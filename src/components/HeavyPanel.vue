@@ -2,12 +2,6 @@
   <section class="heavy-panel" :data-tick="probeTick">
     <h2>HeavyPanel</h2>
     <p class="hmr-marker">HMR TEST 1</p>
-    <p class="hmr-hint">
-      HMR 自检：先点几下 <b>+1</b>，再保存本文件（改上面 “HMR TEST 数字”，或反复注释/取消注释下面的
-      <code>toggle-block</code>）。保存后看这一行：<b>计数不变</b> = HMR 保住了组件状态；
-      <b>计数变成 0 但 “组件挂载时间” 也变了</b> = 组件被整体 reload（状态丢失）；
-      <b>整页刷新（HMR 事件时间不再更新）</b> = full reload。
-    </p>
     <p class="hmr-state">
       点击计数 = <b>{{ count }}</b>
       <button type="button" @click="bump">+1</button>
@@ -15,6 +9,8 @@
       · 最近一次 HMR 事件 = {{ hmrLog || '（还没收到过）' }}
     </p>
     <div class="grid">
+      <!-- 复现入口：反复注释 / 取消注释下面这个 toggle-block，保存后看页面顶部的计数与 HMR 事件 -->
+      <!-- <div id="toggle-block">
       <div class="row" data-row="r-0">
         <div class="cell" data-cell="c-0-0"><span class="cell__label">c-0-0</span><span class="cell__value">33.08</span><span class="cell__tint" style="background:#bca9c9"></span></div>
         <div class="cell" data-cell="c-0-1"><span class="cell__label">c-0-1</span><span class="cell__value">29.23</span><span class="cell__tint" style="background:#412cad"></span></div>
@@ -358,7 +354,6 @@
         <div class="cell" data-cell="c-15-9"><span class="cell__label">c-15-9</span><span class="cell__value">16.52</span><span class="cell__tint" style="background:#6c32df"></span></div>
         <div class="cell" data-cell="c-15-10"><span class="cell__label">c-15-10</span><span class="cell__value">47.73</span><span class="cell__tint" style="background:#780fff"></span></div>
         <div class="cell" data-cell="c-15-11"><span class="cell__label">c-15-11</span><span class="cell__value">13.75</span><span class="cell__tint" style="background:#e716dc"></span></div>
-      <!-- <div id="toggle-block">
         <div class="cell" data-cell="c-15-12"><span class="cell__label">c-15-12</span><span class="cell__value">0.54</span><span class="cell__tint" style="background:#cb668a"></span></div>
         <div class="cell" data-cell="c-15-13"><span class="cell__label">c-15-13</span><span class="cell__value">82.92</span><span class="cell__tint" style="background:#e4d40d"></span></div>
         <div class="cell" data-cell="c-15-14"><span class="cell__label">c-15-14</span><span class="cell__value">14.13</span><span class="cell__tint" style="background:#ec0325"></span></div>
@@ -676,6 +671,8 @@
         <div class="cell" data-cell="c-29-18"><span class="cell__label">c-29-18</span><span class="cell__value">85.15</span><span class="cell__tint" style="background:#f86233"></span></div>
         <div class="cell" data-cell="c-29-19"><span class="cell__label">c-29-19</span><span class="cell__value">60.93</span><span class="cell__tint" style="background:#834ae6"></span></div>
       </div>
+      </div> -->
+      <div id="after-toggle"></div>
       <div class="row" data-row="r-30">
         <div class="cell" data-cell="c-30-0"><span class="cell__label">c-30-0</span><span class="cell__value">88.85</span><span class="cell__tint" style="background:#957d39"></span></div>
         <div class="cell" data-cell="c-30-1"><span class="cell__label">c-30-1</span><span class="cell__value">67.18</span><span class="cell__tint" style="background:#7e4572"></span></div>
@@ -989,8 +986,6 @@
         <div class="cell" data-cell="c-44-1"><span class="cell__label">c-44-1</span><span class="cell__value">52.86</span><span class="cell__tint" style="background:#0b95e2"></span></div>
         <div class="cell" data-cell="c-44-2"><span class="cell__label">c-44-2</span><span class="cell__value">52.19</span><span class="cell__tint" style="background:#62b0c7"></span></div>
         <div class="cell" data-cell="c-44-3"><span class="cell__label">c-44-3</span><span class="cell__value">31.71</span><span class="cell__tint" style="background:#d3ee8d"></span></div>
-      </div> -->
-      <div id="after-toggle"></div>
         <div class="cell" data-cell="c-44-4"><span class="cell__label">c-44-4</span><span class="cell__value">76.22</span><span class="cell__tint" style="background:#69657f"></span></div>
         <div class="cell" data-cell="c-44-5"><span class="cell__label">c-44-5</span><span class="cell__value">55.92</span><span class="cell__tint" style="background:#6b5819"></span></div>
         <div class="cell" data-cell="c-44-6"><span class="cell__label">c-44-6</span><span class="cell__value">33.46</span><span class="cell__tint" style="background:#f005ed"></span></div>
@@ -2923,19 +2918,8 @@ if (import.meta.hot) {
   letter-spacing: 0.05em;
 }
 
-.hmr-hint {
-  color: #555;
-  font-size: 13px;
-  max-width: 80ch;
-}
-
 .hmr-state {
   font-size: 13px;
-}
-
-.hmr-hint code {
-  background: #eee;
-  padding: 0 3px;
 }
 
 .grid {
